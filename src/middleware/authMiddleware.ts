@@ -7,7 +7,11 @@ import { HttpStatusCode } from "../@types";
 const verifyToken: RequestHandler = async (req, res, next) => {
   try {
     const authorization = req.header("Authorization");
-    if (!authorization || !authorization.startsWith("Bearer ")) {
+    if (
+      !authorization ||
+      !authorization.startsWith("Bearer ") ||
+      authorization.length < 8
+    ) {
       throw new APIError(
         "Invalid Authorization",
         HttpStatusCode.UNAUTHORIZED,

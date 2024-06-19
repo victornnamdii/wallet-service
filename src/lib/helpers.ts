@@ -17,8 +17,8 @@ export const comparePassword = (password: string, hash: string) => {
   return compareSync(password, hash);
 };
 
-export const generateToken = (userId: string) => {
-  return jwt.sign({ id: userId }, env.SECRET_KEY, { expiresIn: "1h" });
+export const generateToken = (userId: string, expiresIn: string) => {
+  return jwt.sign({ id: userId }, env.SECRET_KEY, { expiresIn: expiresIn });
 };
 
 export const decodeToken = (token: string) => {

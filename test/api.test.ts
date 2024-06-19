@@ -3,41 +3,47 @@ import { after, describe, it } from "mocha";
 import chaiHttp from "chai-http";
 import { UserModel } from "../src/models/User";
 import app from "../src/server";
-import { comparePassword } from "../src/lib/helpers";
+import { comparePassword, generateToken } from "../src/lib/helpers";
 import { decrypt } from "../src/lib/crypto";
 
 chai.use(chaiHttp);
 
 const blacklistedBVN = "12345678901";
-const testMail = "johndoe7@victor.com";
+const testUser = {
+  email: "johndoe7@victor.com",
+  password: "123456",
+  firstName: "John",
+  lastName: "Doe",
+  bvn: "12345678903",
+  phoneNumber: "+2348101231234",
+};
+
+let token: string;
+let userId: string;
 
 describe("API Tests", function () {
   after(async () => {
-    await UserModel.deleteByEmail(testMail);
+    await UserModel.deleteByEmail(testUser.email);
   });
 
   describe("Auth Tests", () => {
     describe("Sign Up", () => {
       it("should successfully sign up the user", async () => {
-        const res = await chai.request(app).post("/api/v1/users/signup").send({
-          email: testMail,
-          password: "123456",
-          firstName: "John",
-          lastName: "Doe",
-          bvn: "12345678903",
-          phoneNumber: "+2348101231234",
-        });
+        const res = await chai
+          .request(app)
+          .post("/api/v1/users/signup")
+          .send(testUser);
 
         expect(res).to.have.status(201);
         expect(res.body.message).to.equal("Successful");
-        expect(res.body.data.user.email).to.equal(testMail);
-        expect(res.body.data.user.firstName).to.equal("John");
+        expect(res.body.data.user.email).to.equal(testUser.email);
+        expect(res.body.data.user.firstName).to.equal(testUser.firstName);
         expect(res.body.data.user.lastName).to.equal("Doe");
         expect(res.body.data.user.bvn).to.equal("12345678903");
         expect(res.body.data.user.phoneNumber).to.equal("+2348101231234");
         expect(res.body.data.user.password).to.not.exist;
 
-        const user = await UserModel.findByEmail(testMail);
+        const user = await UserModel.findByEmail(testUser.email);
         expect(user).to.exist;
 
         // Checking password stored was hashed
@@ -53,7 +59,7 @@ describe("API Tests", function () {
         const testTime = new Date();
 
         const res = await chai.request(app).post("/api/v1/users/signup").send({
-          email: testMail,
+          email: testUser.email,
           password: "123456",
           firstName: "John",
           lastName: "Doe",
@@ -63,10 +69,10 @@ describe("API Tests", function () {
 
         expect(res).to.have.status(400);
         expect(res.body.message).to.equal(
-          `User with email '${testMail}' already exists`
+          `User with email '${testUser.email}' already exists`
         );
 
-        const user = await UserModel.findByEmail(testMail);
+        const user = await UserModel.findByEmail(testUser.email);
         expect(user).to.exist;
         expect(user!.created_at! < testTime);
       });
@@ -78,7 +84,7 @@ describe("API Tests", function () {
           firstName: "John",
           lastName: "Doe",
           bvn: "12345678905",
-          phoneNumber: "+2348101231234",
+          phoneNumber: testUser.phoneNumber,
         });
 
         expect(res).to.have.status(400);
@@ -96,7 +102,7 @@ describe("API Tests", function () {
           password: "123456",
           firstName: "John",
           lastName: "Doe",
-          bvn: "12345678903",
+          bvn: testUser.bvn,
           phoneNumber: "+2348101231238",
         });
 
@@ -498,6 +504,176 @@ describe("API Tests", function () {
         expect(user === undefined || user!.created_at! < testTime).to.equal(
           true
         );
+      });
+    });
+
+    describe("Log in", () => {
+      it("should successfully log a user in", async () => {
+        const res = await chai.request(app).post("/api/v1/users/login").send({
+          email: testUser.email,
+          password: testUser.password,
+        });
+
+        expect(res.status).to.equal(200);
+        expect(res.body.data.token).to.exist;
+
+        token = res.body.data.token;
+      });
+
+      it("should not log a user in when email or password is not specified", async () => {
+        let res = await chai.request(app).post("/api/v1/users/login");
+
+        expect(res.status).to.equal(400);
+        expect(res.body.message).to.equal(
+          "Please enter your email and password"
+        );
+        expect(res.body.data?.token).to.not.exist;
+
+        res = await chai.request(app).post("/api/v1/users/login").send({
+          email: testUser.email,
+        });
+
+        expect(res.status).to.equal(400);
+        expect(res.body.message).to.equal(
+          "Please enter your email and password"
+        );
+        expect(res.body.data?.token).to.not.exist;
+
+        res = await chai.request(app).post("/api/v1/users/login").send({
+          password: testUser.password,
+        });
+
+        expect(res.status).to.equal(400);
+        expect(res.body.message).to.equal(
+          "Please enter your email and password"
+        );
+        expect(res.body.data?.token).to.not.exist;
+      });
+
+      it("should not log a user in when invalid credentials are passed", async () => {
+        let res = await chai.request(app).post("/api/v1/users/login").send({
+          email: testUser.email,
+          password: "1234567",
+        });
+
+        expect(res.status).to.equal(401);
+        expect(res.body.message).to.equal("Email or password is incorrect");
+        expect(res.body.data?.token).to.not.exist;
+
+        res = await chai
+          .request(app)
+          .post("/api/v1/users/login")
+          .send({
+            email: [testUser.email],
+            password: "1234567",
+          });
+
+        expect(res.status).to.equal(401);
+        expect(res.body.message).to.equal("Email or password is incorrect");
+        expect(res.body.data?.token).to.not.exist;
+
+        res = await chai
+          .request(app)
+          .post("/api/v1/users/login")
+          .send({
+            email: testUser.email,
+            password: ["test1234"],
+          });
+
+        expect(res.status).to.equal(401);
+        expect(res.body.message).to.equal("Email or password is incorrect");
+        expect(res.body.data?.token).to.not.exist;
+
+        res = await chai.request(app).post("/api/v1/users/login").send({
+          email: "testMail",
+          password: "test1234",
+        });
+
+        expect(res.status).to.equal(401);
+        expect(res.body.message).to.equal("Email or password is incorrect");
+        expect(res.body.data?.token).to.not.exist;
+      });
+    });
+
+    describe("Token Tests", () => {
+      it("should get user's profile with valid token", async () => {
+        const res = await chai
+          .request(app)
+          .get("/api/v1/users/profile")
+          .set("Authorization", `Bearer ${token}`);
+
+        expect(res.status).to.equal(200);
+        expect(res.body.data.user).to.exist;
+        expect(res.body.data.user.walletId).to.exist;
+        expect(res.body.data.user.id).to.exist;
+        expect(res.body.data.user.password).to.not.exist;
+        expect(res.body.data.user.email).to.equal(testUser.email);
+        expect(res.body.data.user.firstName).to.equal(testUser.firstName);
+        expect(res.body.data.user.lastName).to.equal(testUser.lastName);
+        expect(res.body.data.user.bvn).to.equal(testUser.bvn);
+        expect(res.body.data.user.phoneNumber).to.equal(testUser.phoneNumber);
+
+        userId = res.body.data.user.id;
+      });
+
+      it("should return invalid authorization when there's no bearer auth token", async () => {
+        let res = await chai.request(app).get("/api/v1/users/profile");
+
+        expect(res.status).to.equal(401);
+        expect(res.body.data?.user).to.not.exist;
+        expect(res.body.message).to.equal("Invalid Authorization");
+
+        res = await chai
+          .request(app)
+          .get("/api/v1/users/profile")
+          .set("Authorization", `${token}`);
+
+        expect(res.status).to.equal(401);
+        expect(res.body.data?.user).to.not.exist;
+        expect(res.body.message).to.equal("Invalid Authorization");
+
+        res = await chai
+          .request(app)
+          .get("/api/v1/users/profile")
+          .set("Authorization", "Bearer ");
+
+        expect(res.status).to.equal(401);
+        expect(res.body.data?.user).to.not.exist;
+        expect(res.body.message).to.equal("Invalid Authorization");
+      });
+
+      it("should return forbidden with invalid auth token", async () => {
+        let res = await chai
+          .request(app)
+          .get("/api/v1/users/profile")
+          .set("Authorization", "Bearer invalidtoken");
+
+        expect(res.status).to.equal(403);
+        expect(res.body.data?.user).to.not.exist;
+        expect(res.body.message).to.equal("Forbidden");
+
+        const expiredToken = generateToken(userId, "1s");
+        const expiryTime = Date.now() + 1050;
+        while (Date.now() < expiryTime);
+
+        res = await chai
+          .request(app)
+          .get("/api/v1/users/profile")
+          .set("Authorization", `Bearer ${expiredToken}`);
+
+        expect(res.status).to.equal(403);
+        expect(res.body.data?.user).to.not.exist;
+        expect(res.body.message).to.equal("Forbidden");
+
+        const invalidToken = generateToken("invalid", "1h");
+        res = await chai
+          .request(app)
+          .get("/api/v1/users/profile")
+          .set("Authorization", `Bearer ${invalidToken}`);
+
+        expect(res.status).to.equal(403);
+        expect(res.body.data?.user).to.not.exist;
+        expect(res.body.message).to.equal("Forbidden");
       });
     });
   });

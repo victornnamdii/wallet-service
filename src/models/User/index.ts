@@ -162,13 +162,17 @@ export class UserModel extends Model {
       );
     }
 
-    if (typeof email === "string" && typeof password === "string") {
+    if (
+      typeof email === "string" &&
+      isEmail(email) &&
+      typeof password === "string"
+    ) {
       const user = await UserModel.findByEmail(email);
 
       if (user !== undefined) {
         const authenticated = comparePassword(password, user.password!);
         if (authenticated) {
-          return generateToken(user.id);
+          return generateToken(user.id, "1h");
         }
       }
     }
