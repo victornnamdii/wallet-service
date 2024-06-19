@@ -19,3 +19,5 @@ app.use("/api/v1/wallet", walletRouter);
 
 app.use(pageNotFoundHandler);
 app.use(errorRequestHandler);
+
+export default app;

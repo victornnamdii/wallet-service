@@ -1,4 +1,4 @@
-import { hashSync, genSaltSync, compare } from "bcrypt";
+import { hashSync, genSaltSync, compareSync } from "bcrypt";
 import jwt, {
   JsonWebTokenError,
   NotBeforeError,
@@ -13,8 +13,8 @@ export const hashString = (string: string) => {
   return hashSync(string, salt);
 };
 
-export const comparePassword = async (password: string, hash: string) => {
-  return await compare(password, hash);
+export const comparePassword = (password: string, hash: string) => {
+  return compareSync(password, hash);
 };
 
 export const generateToken = (userId: string) => {

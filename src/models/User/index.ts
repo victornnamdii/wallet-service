@@ -3,6 +3,7 @@ import { HttpStatusCode, KnexError, User } from "../../@types";
 import isNumeric from "validator/lib/isNumeric";
 import isEmail from "validator/lib/isEmail";
 import isMobilePhone from "validator/lib/isMobilePhone";
+import isAlpha from "validator/lib/isAlpha";
 import { APIError } from "../../lib/error";
 import {
   comparePassword,
@@ -17,8 +18,21 @@ import { Knex } from "knex";
 export class UserModel extends Model {
   protected static tableName = "users";
 
-  public static async findByEmail(email: string): Promise<User | null> {
+  public static async findByEmail(email: string): Promise<User | undefined> {
     return await this.table.where("email", email).select("*").first();
+  }
+
+  public static async findByPhoneNumber(
+    phoneNumber: string
+  ): Promise<User | undefined> {
+    return await this.table
+      .where("phoneNumber", phoneNumber)
+      .select("*")
+      .first();
+  }
+
+  public static async deleteByEmail(email: string): Promise<void> {
+    await this.table.where("email", email).delete();
   }
 
   public static async insertUser<T extends User>(
@@ -27,7 +41,7 @@ export class UserModel extends Model {
   ): Promise<User> {
     const { id, email, firstName, lastName, phoneNumber, bvn, password } = data;
     try {
-      if (!isEmail(email)) {
+      if (typeof email !== "string" || !isEmail(email)) {
         throw new APIError(
           "Validation Error",
           HttpStatusCode.BAD_REQUEST,
@@ -35,19 +49,27 @@ export class UserModel extends Model {
         );
       }
 
-      if (typeof firstName !== "string" || firstName?.length < 1) {
+      if (
+        typeof firstName !== "string" ||
+        firstName?.length < 1 ||
+        !isAlpha(firstName)
+      ) {
         throw new APIError(
           "Validation Error",
           HttpStatusCode.BAD_REQUEST,
-          "Please enter a first name"
+          "Please enter a valid first name"
         );
       }
 
-      if (typeof lastName !== "string" || lastName?.length < 1) {
+      if (
+        typeof lastName !== "string" ||
+        lastName?.length < 1 ||
+        !isAlpha(lastName)
+      ) {
         throw new APIError(
           "Validation Error",
           HttpStatusCode.BAD_REQUEST,
-          "Please enter a last name"
+          "Please enter a valid last name"
         );
       }
 
@@ -143,8 +165,8 @@ export class UserModel extends Model {
     if (typeof email === "string" && typeof password === "string") {
       const user = await UserModel.findByEmail(email);
 
-      if (user !== null) {
-        const authenticated = await comparePassword(password, user.password!);
+      if (user !== undefined) {
+        const authenticated = comparePassword(password, user.password!);
         if (authenticated) {
           return generateToken(user.id);
         }
