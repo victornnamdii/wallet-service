@@ -98,8 +98,16 @@ class WalletController {
 
   static async transfer(req: Request, res: Response, next: NextFunction) {
     try {
-      const { amount } = req.body;
+      const { amount, narration } = req.body;
       const { receivingWalletId } = req.params;
+
+      if (req.user!.walletId! === receivingWalletId) {
+        throw new APIError(
+          "Circular Transfer",
+          HttpStatusCode.BAD_REQUEST,
+          "Can not perform a transfer from and to the same account"
+        );
+      }
 
       await database.transaction(async (trx: Knex.Transaction) => {
         const debitedWallet = await WalletModel.withdraw(
@@ -113,7 +121,7 @@ class WalletController {
             walletId: req.user!.walletId!,
             amount,
             type: transactionType.Debit,
-            narration: `TRF TO ${receivingWalletId}`,
+            narration: `TRF TO ${receivingWalletId}/${narration ?? ""}`,
           },
           trx
         );
@@ -129,7 +137,7 @@ class WalletController {
             walletId: creditedWallet.id,
             amount,
             type: transactionType.Credit,
-            narration: `TRF FROM ${debitedWallet.id}`,
+            narration: `TRF FROM ${debitedWallet.id}/${narration ?? ""}`,
           },
           trx
         );
