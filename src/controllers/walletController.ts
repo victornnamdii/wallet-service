@@ -109,20 +109,18 @@ class WalletController {
         );
       }
 
+      if (!narration || typeof narration !== "string") {
+        throw new APIError(
+          "No Narration",
+          HttpStatusCode.BAD_REQUEST,
+          "Please enter the transaction narration"
+        );
+      }
+
       await database.transaction(async (trx: Knex.Transaction) => {
         const debitedWallet = await WalletModel.withdraw(
           req.user!.id,
           amount,
-          trx
-        );
-
-        await TransactionModel.createTransaction(
-          {
-            walletId: req.user!.walletId!,
-            amount,
-            type: transactionType.Debit,
-            narration: `TRF TO ${receivingWalletId}/${narration ?? ""}`,
-          },
           trx
         );
 
@@ -132,12 +130,22 @@ class WalletController {
           trx
         );
 
+        const transaction = await TransactionModel.createTransaction(
+          {
+            walletId: debitedWallet.id,
+            amount,
+            type: transactionType.Debit,
+            narration: `TRF TO ${debitedWallet.userName}/${narration}`,
+          },
+          trx
+        );
+
         await TransactionModel.createTransaction(
           {
             walletId: creditedWallet.id,
             amount,
             type: transactionType.Credit,
-            narration: `TRF FROM ${debitedWallet.id}/${narration ?? ""}`,
+            narration: `TRF FROM ${debitedWallet.userName}/${narration}`,
           },
           trx
         );
@@ -147,8 +155,8 @@ class WalletController {
           .json(
             new ResponseDTO(
               "success",
-              `${amount} successfully transferred to ${creditedWallet.id}`,
-              { wallet: debitedWallet }
+              `${amount} successfully transferred to ${creditedWallet.userName}`,
+              { transaction, wallet: debitedWallet }
             )
           );
       });

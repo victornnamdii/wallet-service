@@ -29,6 +29,7 @@ export type Wallet = {
   id: string;
   userId: string;
   balance: number;
+  userName?: string
   created_at?: Date;
   updated_at?: Date;
 };

@@ -62,7 +62,11 @@ export class WalletModel extends Model {
     }
 
     const wallet = await trx<Wallet>(this.tableName)
-      .where("id", id)
+      .where("wallets.id", id)
+      .select(
+        trx.raw("wallets.*, CONCAT(u.firstName, \" \", u.lastName) as userName")
+      )
+      .innerJoin("users as u", "wallets.userId", "=", "u.id")
       .forUpdate()
       .first();
 
@@ -90,6 +94,10 @@ export class WalletModel extends Model {
 
     const wallet = (await trx<Wallet>(this.tableName)
       .where("userId", userId)
+      .select(
+        trx.raw("wallets.*, CONCAT(u.firstName, \" \", u.lastName) as userName")
+      )
+      .innerJoin("users as u", "wallets.userId", "=", "u.id")
       .forUpdate()
       .first()) as Wallet;
 

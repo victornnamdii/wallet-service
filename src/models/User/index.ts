@@ -160,7 +160,7 @@ export class UserModel extends Model {
 
   public static async findByIdWithWalletId(id: string): Promise<User | null> {
     return await this.table
-      .where("userId", id)
+      .where("users.id", id)
       .select("users.*", "w.id as walletId")
       .innerJoin("wallets as w", "users.id", "=", "w.userId")
       .first();
