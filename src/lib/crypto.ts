@@ -5,9 +5,10 @@ const algorithm = env.CRYPTO_ALGORITHM;
 const IV = env.CRYPTO_IV;
 const crypto_key = env.CRYPTO_KEY;
 
-class Crypto {
+class CryptoClient {
   private cipher: crypto.Cipher;
   private decipher: crypto.Decipher;
+
   constructor() {
     this.cipher = crypto.createCipheriv(algorithm, crypto_key, IV);
     this.decipher = crypto.createDecipheriv(algorithm, crypto_key, IV);
@@ -33,11 +34,11 @@ class Crypto {
 }
 
 export const encrypt = (string: string): string => {
-  const cryptoClient = new Crypto();
+  const cryptoClient = new CryptoClient();
   return cryptoClient.encrypt(string);
 };
 
 export const decrypt = (string: string): string => {
-  const cryptoClient = new Crypto();
+  const cryptoClient = new CryptoClient();
   return cryptoClient.decrypt(string);
 };

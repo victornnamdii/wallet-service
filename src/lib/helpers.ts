@@ -51,7 +51,7 @@ export const isUniqueConstraintError = (err: KnexError) => {
   return false;
 };
 
-export const countDecimals = (number: number) => {
+const countDecimals = (number: number) => {
   const text = number.toString();
 
   if (text.indexOf("e-") !== -1) {
@@ -71,4 +71,22 @@ export const countDecimals = (number: number) => {
   }
 
   return 0;
+};
+
+export const checkAmount = (amount: number) => {
+  if (amount === undefined) {
+    throw new APIError(
+      "Invalid amount",
+      HttpStatusCode.BAD_REQUEST,
+      "Please specify an amount"
+    );
+  }
+
+  if (typeof amount !== "number" || amount <= 0 || countDecimals(amount) > 2) {
+    throw new APIError(
+      "Invalid amount",
+      HttpStatusCode.BAD_REQUEST,
+      "Amount should be a number greater than 0 with a maximum of 2 decimal places"
+    );
+  }
 };

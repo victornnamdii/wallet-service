@@ -4,7 +4,7 @@ import { HttpStatusCode, Wallet } from "../../@types";
 import { Model } from "../Model";
 import { Knex } from "knex";
 import { APIError } from "../../lib/error";
-import { countDecimals } from "../../lib/helpers";
+import { checkAmount } from "../../lib/helpers";
 
 export class WalletModel extends Model {
   protected static tableName = "wallets";
@@ -24,34 +24,13 @@ export class WalletModel extends Model {
     return { id, userId, balance: 0 };
   }
 
-  private static checkAmount(amount: number) {
-    if (amount === undefined) {
-      throw new APIError(
-        "Invalid amount",
-        HttpStatusCode.BAD_REQUEST,
-        "Please specify an amount"
-      );
-    }
-
-    if (
-      typeof amount !== "number" ||
-      amount <= 0 ||
-      countDecimals(amount) > 2
-    ) {
-      throw new APIError(
-        "Invalid amount",
-        HttpStatusCode.BAD_REQUEST,
-        "Amount should be a number greater than 0 with a maximum of 2 decimal places"
-      );
-    }
-  }
-
   public static async fundWallet(
     id: string,
     amount: number,
     trx: Knex.Transaction
   ): Promise<Wallet> {
-    WalletModel.checkAmount(amount);
+
+    checkAmount(amount);
 
     if (!isUUID(id, 4)) {
       throw new APIError(
@@ -90,7 +69,7 @@ export class WalletModel extends Model {
     amount: number,
     trx: Knex.Transaction
   ): Promise<Wallet> {
-    WalletModel.checkAmount(amount);
+    checkAmount(amount);
 
     const wallet = (await trx<Wallet>(this.tableName)
       .where("userId", userId)
