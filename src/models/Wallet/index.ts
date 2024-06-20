@@ -29,7 +29,7 @@ export class WalletModel extends Model {
     amount: number,
     trx: Knex.Transaction
   ): Promise<Wallet> {
-
+    
     checkAmount(amount);
 
     if (!isUUID(id, 4)) {
@@ -80,7 +80,7 @@ export class WalletModel extends Model {
       .forUpdate()
       .first()) as Wallet;
 
-    if (wallet.balance > amount) {
+    if (wallet.balance >= amount) {
       await trx(this.tableName)
         .where("userId", userId)
         .decrement("balance", amount);
@@ -94,5 +94,9 @@ export class WalletModel extends Model {
       HttpStatusCode.BAD_REQUEST,
       "You don't have enough funds for this operation"
     );
+  }
+
+  public static async emptyWallet(id: string) {
+    await this.table.where("id", id).update({ balance: 0 });
   }
 }

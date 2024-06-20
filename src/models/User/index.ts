@@ -184,7 +184,7 @@ export class UserModel extends Model {
     );
   }
 
-  public static async findByIdWithWalletId(id: string): Promise<User | null> {
+  public static async findByIdWithWalletId(id: string): Promise<User | undefined> {
     return await this.table
       .where("users.id", id)
       .select("users.*", "w.id as walletId")

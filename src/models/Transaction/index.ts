@@ -22,4 +22,16 @@ export class TransactionModel extends Model {
 
     return { id, walletId, amount, type, narration };
   }
+
+  public static async clearTransactions(walletId: string): Promise<void> {
+    await this.table.where("walletId", walletId).delete();
+  }
+
+  public static async findByWalletId(walletId: string): Promise<Transaction | undefined> {
+    return await this.table.where("walletId", walletId).select("*").first();
+  }
+
+  public static async findAllByWalletId(walletId: string): Promise<Transaction[]> {
+    return await this.table.where("walletId", walletId).select("*");
+  }
 }

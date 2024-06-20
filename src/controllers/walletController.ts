@@ -135,7 +135,7 @@ class WalletController {
             walletId: debitedWallet.id,
             amount,
             type: transactionType.Debit,
-            narration: `TRF TO ${debitedWallet.userName}/${narration}`,
+            narration: `TRF TO ${creditedWallet.userName}/${narration}`,
           },
           trx
         );
