@@ -1,10 +1,9 @@
-import { v4 } from "uuid";
 import isUUID from "validator/lib/isUUID";
 import { HttpStatusCode, Wallet } from "../../@types";
 import { Model } from "../Model";
 import { Knex } from "knex";
 import { APIError } from "../../lib/error";
-import { checkAmount } from "../../lib/helpers";
+import { checkAmount, generateId } from "../../lib/helpers";
 
 export class WalletModel extends Model {
   protected static tableName = "wallets";
@@ -17,7 +16,7 @@ export class WalletModel extends Model {
     userId: string,
     trx: Knex.Transaction
   ): Promise<Wallet> {
-    const id = v4();
+    const id = generateId();
 
     await super.insert({ id, userId }, trx);
 

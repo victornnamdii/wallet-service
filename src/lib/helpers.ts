@@ -1,4 +1,5 @@
 import { hashSync, genSaltSync, compareSync } from "bcrypt";
+import { v4 } from "uuid";
 import jwt, {
   JsonWebTokenError,
   NotBeforeError,
@@ -71,6 +72,10 @@ const countDecimals = (number: number) => {
   }
 
   return 0;
+};
+
+export const generateId = () => {
+  return v4();
 };
 
 export const checkAmount = (amount: number) => {

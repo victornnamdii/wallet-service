@@ -1,5 +1,5 @@
+import { generateId } from "../../lib/helpers";
 import { Transaction, transactionType } from "../../@types";
-import { v4 } from "uuid";
 import { Model } from "../Model";
 import { Knex } from "knex";
 
@@ -16,7 +16,7 @@ export class TransactionModel extends Model {
     trx: Knex.Transaction
   ): Promise<Transaction> {
     const { walletId, amount, type, narration } = data;
-    const id = v4();
+    const id = generateId();
 
     await super.insert({ id, walletId, amount, type, narration }, trx);
 

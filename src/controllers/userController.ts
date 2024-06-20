@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import { UserModel } from "../models/User";
-import { v4 } from "uuid";
 import { ResponseDTO } from "../lib/response";
 import { decrypt } from "../lib/crypto";
 import { database } from "../database";
 import { WalletModel } from "../models/Wallet";
+import { generateId } from "../lib/helpers";
 
 class UserController {
   static async signUp(req: Request, res: Response, next: NextFunction) {
@@ -13,7 +13,7 @@ class UserController {
         req.body;
 
       await database.transaction(async (trx) => {
-        const id = v4();
+        const id = generateId();
 
         const user = await UserModel.insertUser(
           {
