@@ -973,12 +973,16 @@ describe("API Tests", function () {
         ).to.equal(true);
         expect(
           transactions.some(
-            (transaction) => transaction.type === "credit" && transaction.narration === "FUND BY SELF"
+            (transaction) =>
+              transaction.type === "credit" &&
+              transaction.narration === "FUND BY SELF"
           )
         ).to.equal(true);
         expect(
           transactions.some(
-            (transaction) => transaction.type === "debit" && transaction.narration === "WITHDRAWAL BY SELF"
+            (transaction) =>
+              transaction.type === "debit" &&
+              transaction.narration === "WITHDRAWAL BY SELF"
           )
         ).to.equal(true);
       });
@@ -1018,7 +1022,9 @@ describe("API Tests", function () {
         ).to.equal(true);
         expect(
           transactions.some(
-            (transaction) => transaction.type === "credit" && transaction.narration === "FUND BY SELF"
+            (transaction) =>
+              transaction.type === "credit" &&
+              transaction.narration === "FUND BY SELF"
           )
         ).to.equal(true);
       });
