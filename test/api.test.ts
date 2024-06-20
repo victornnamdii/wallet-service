@@ -55,7 +55,7 @@ describe("API Tests", function () {
 
   describe("Auth Tests", () => {
     describe("Sign Up", () => {
-      it("should successfully sign up the user", async () => {
+      it("should successfully register the user", async () => {
         const res = await chai
           .request(app)
           .post("/api/v1/users/signup")
@@ -107,7 +107,7 @@ describe("API Tests", function () {
         // Checking the BVN stored was encrypted and can be successfully decrypted
         expect(user!.bvn).to.not.equal(testUser.bvn);
         expect(encrypt(testUser.bvn)).to.equal(user!.bvn);
-        expect(decrypt(user!.bvn)).to.equal("12345678903");
+        expect(decrypt(user!.bvn)).to.equal(testUser.bvn);
       });
 
       it("should not register a user with duplicate email", async () => {
