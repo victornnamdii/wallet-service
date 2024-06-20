@@ -144,7 +144,7 @@ describe("API Tests", function () {
 
         expect(res).to.have.status(400);
         expect(res.body.message).to.equal(
-          "User with phone number '+2348101231234' already exists"
+          `User with phone number '${testUser.phoneNumber}' already exists`
         );
 
         const user = await UserModel.findByEmail("j@j.com");
@@ -163,14 +163,14 @@ describe("API Tests", function () {
 
         expect(res).to.have.status(400);
         expect(res.body.message).to.equal(
-          "User with BVN '12345678903' already exists"
+          `User with BVN '${testUser.bvn}' already exists`
         );
 
         const user = await UserModel.findByEmail("j@j.com");
         expect(user).to.not.exist;
       });
 
-      xit("should not register a user in the karma blacklist", async () => {
+      it("should not register a user in the karma blacklist", async () => {
         const res = await chai.request(app).post("/api/v1/users/signup").send({
           email: "j@j.com",
           password: "123456",
