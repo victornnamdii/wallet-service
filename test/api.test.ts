@@ -460,6 +460,18 @@ describe("API Tests", function () {
         expect(res).to.have.status(400);
         expect(res.body.message).to.equal("Please enter a valid BVN");
 
+        res = await chai.request(app).post("/api/v1/users/signup").send({
+          email: "j@j.com",
+          password: "123456",
+          firstName: "John",
+          lastName: "Doe",
+          bvn: "52345678906",
+          phoneNumber: "+2348101231235",
+        });
+
+        expect(res).to.have.status(400);
+        expect(res.body.message).to.equal("Please enter a valid BVN");
+
         const user = await UserModel.findByPhoneNumber("+2348101231235");
         expect(user === undefined || user!.created_at! < testTime).to.equal(
           true

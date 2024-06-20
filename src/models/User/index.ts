@@ -81,7 +81,12 @@ export class UserModel extends Model {
         );
       }
 
-      if (typeof bvn !== "string" || !isNumeric(bvn) || bvn.length !== 11) {
+      if (
+        typeof bvn !== "string" ||
+        !isNumeric(bvn) ||
+        bvn.length !== 11 ||
+        (bvn[0] !== "1" && bvn[0] !== "2")
+      ) {
         throw new APIError(
           "Validation Error",
           HttpStatusCode.BAD_REQUEST,
@@ -184,7 +189,9 @@ export class UserModel extends Model {
     );
   }
 
-  public static async findByIdWithWalletId(id: string): Promise<User | undefined> {
+  public static async findByIdWithWalletId(
+    id: string
+  ): Promise<User | undefined> {
     return await this.table
       .where("users.id", id)
       .select("users.*", "w.id as walletId")
