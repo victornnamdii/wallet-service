@@ -172,7 +172,7 @@ export class UserModel extends Model {
       isEmail(email) &&
       typeof password === "string"
     ) {
-      const user = await UserModel.findByEmail(email);
+      const user = await UserModel.findByEmail(email.toLowerCase());
 
       if (user !== undefined) {
         const authenticated = comparePassword(password, user.password!);
