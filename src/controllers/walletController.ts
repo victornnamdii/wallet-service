@@ -32,33 +32,37 @@ class WalletController {
     try {
       const { amount } = req.body;
 
-      await database.transaction(async (trx: Knex.Transaction) => {
-        const wallet = await WalletModel.fundWallet(
-          req.user!.walletId!,
-          amount,
-          trx
-        );
-
-        await TransactionModel.createTransaction(
-          {
-            walletId: req.user!.walletId!,
+      const wallet = await database.transaction(
+        async (trx: Knex.Transaction) => {
+          const updatedWallet = await WalletModel.fundWallet(
+            req.user!.walletId!,
             amount,
-            type: transactionType.Credit,
-            narration: "FUND BY SELF",
-          },
-          trx
-        );
-
-        res
-          .status(201)
-          .json(
-            new ResponseDTO(
-              "success",
-              `${amount} successfully added to your wallet`,
-              { wallet }
-            )
+            trx
           );
-      });
+
+          await TransactionModel.createTransaction(
+            {
+              walletId: req.user!.walletId!,
+              amount,
+              type: transactionType.Credit,
+              narration: "FUND BY SELF",
+            },
+            trx
+          );
+
+          return updatedWallet;
+        }
+      );
+
+      res
+        .status(201)
+        .json(
+          new ResponseDTO(
+            "success",
+            `${amount} successfully added to your wallet`,
+            { wallet }
+          )
+        );
     } catch (error) {
       next(error);
     }
@@ -68,29 +72,37 @@ class WalletController {
     try {
       const { amount } = req.body;
 
-      await database.transaction(async (trx: Knex.Transaction) => {
-        const wallet = await WalletModel.withdraw(req.user!.id, amount, trx);
-
-        await TransactionModel.createTransaction(
-          {
-            walletId: req.user!.walletId!,
+      const wallet = await database.transaction(
+        async (trx: Knex.Transaction) => {
+          const updatedWallet = await WalletModel.withdraw(
+            req.user!.id,
             amount,
-            type: transactionType.Debit,
-            narration: "WITHDRAWAL BY SELF",
-          },
-          trx
-        );
-
-        res
-          .status(201)
-          .json(
-            new ResponseDTO(
-              "success",
-              `${amount} successfully debited from your wallet`,
-              { wallet }
-            )
+            trx
           );
-      });
+
+          await TransactionModel.createTransaction(
+            {
+              walletId: req.user!.walletId!,
+              amount,
+              type: transactionType.Debit,
+              narration: "WITHDRAWAL BY SELF",
+            },
+            trx
+          );
+
+          return updatedWallet;
+        }
+      );
+
+      res
+        .status(201)
+        .json(
+          new ResponseDTO(
+            "success",
+            `${amount} successfully debited from your wallet`,
+            { wallet }
+          )
+        );
     } catch (error) {
       next(error);
     }
@@ -117,49 +129,53 @@ class WalletController {
         );
       }
 
-      await database.transaction(async (trx: Knex.Transaction) => {
-        const debitedWallet = await WalletModel.withdraw(
-          req.user!.id,
-          amount,
-          trx
-        );
-
-        const creditedWallet = await WalletModel.fundWallet(
-          receivingWalletId,
-          amount,
-          trx
-        );
-
-        const transaction = await TransactionModel.createTransaction(
-          {
-            walletId: debitedWallet.id,
+      const { transaction, debitedWallet, creditedWallet } = await database.transaction(
+        async (trx: Knex.Transaction) => {
+          const debitedWallet = await WalletModel.withdraw(
+            req.user!.id,
             amount,
-            type: transactionType.Debit,
-            narration: `TRF TO ${creditedWallet.userName}/${narration}`,
-          },
-          trx
-        );
-
-        await TransactionModel.createTransaction(
-          {
-            walletId: creditedWallet.id,
-            amount,
-            type: transactionType.Credit,
-            narration: `TRF FROM ${debitedWallet.userName}/${narration}`,
-          },
-          trx
-        );
-
-        res
-          .status(201)
-          .json(
-            new ResponseDTO(
-              "success",
-              `${amount} successfully transferred to ${creditedWallet.userName}`,
-              { transaction, wallet: debitedWallet }
-            )
+            trx
           );
-      });
+
+          const creditedWallet = await WalletModel.fundWallet(
+            receivingWalletId,
+            amount,
+            trx
+          );
+
+          const transaction = await TransactionModel.createTransaction(
+            {
+              walletId: debitedWallet.id,
+              amount,
+              type: transactionType.Debit,
+              narration: `TRF TO ${creditedWallet.userName}/${narration}`,
+            },
+            trx
+          );
+
+          await TransactionModel.createTransaction(
+            {
+              walletId: creditedWallet.id,
+              amount,
+              type: transactionType.Credit,
+              narration: `TRF FROM ${debitedWallet.userName}/${narration}`,
+            },
+            trx
+          );
+
+          return { transaction, debitedWallet, creditedWallet };
+        }
+      );
+
+      res
+        .status(201)
+        .json(
+          new ResponseDTO(
+            "success",
+            `${amount} successfully transferred to ${creditedWallet.userName}`,
+            { transaction, wallet: debitedWallet }
+          )
+        );
     } catch (error) {
       next(error);
     }
