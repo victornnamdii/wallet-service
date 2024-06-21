@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { TransactionModel } from "../models/Transaction";
 import { WalletModel } from "../models/Wallet";
-import { database } from "../database";
+import { database } from "../config/database";
 import { APIError } from "../lib/error";
 import { HttpStatusCode, transactionType } from "../@types";
 import { ResponseDTO } from "../lib/response";
@@ -129,8 +129,8 @@ class WalletController {
         );
       }
 
-      const { transaction, debitedWallet, creditedWallet } = await database.transaction(
-        async (trx: Knex.Transaction) => {
+      const { transaction, debitedWallet, creditedWallet } =
+        await database.transaction(async (trx: Knex.Transaction) => {
           const debitedWallet = await WalletModel.withdraw(
             req.user!.id,
             amount,
@@ -164,8 +164,7 @@ class WalletController {
           );
 
           return { transaction, debitedWallet, creditedWallet };
-        }
-      );
+        });
 
       res
         .status(201)

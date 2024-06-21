@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { UserModel } from "../models/User";
 import { ResponseDTO } from "../lib/response";
 import { decrypt } from "../lib/crypto";
-import { database } from "../database";
+import { database } from "../config/database";
 import { WalletModel } from "../models/Wallet";
 import { generateId } from "../lib/helpers";
 

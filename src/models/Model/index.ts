@@ -1,5 +1,5 @@
 import { Knex } from "knex";
-import { database } from "../../database";
+import { database } from "../../config/database";
 
 export abstract class Model {
   protected static tableName?: string;
