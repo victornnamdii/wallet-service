@@ -10,4 +10,6 @@ COPY . .
 
 RUN npx knex migrate:latest
 
+RUN npm test
+
 CMD [ "npm", "start" ]
